@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, PLATFORM_ID, Inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment.development';
 import { JwtRequestDTO, JwtResponseDTO } from '../models/Auth'; 
@@ -8,57 +9,62 @@ import { Observable, tap } from 'rxjs';
 export class AuthService {
   private url = `${environment.base}`;
 
-  constructor(private http: HttpClient) {}
+  // 🚀 1. Inyectamos PLATFORM_ID aquí para saber en qué entorno estamos
+  constructor(
+    private http: HttpClient,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {}
 
   login(credentials: JwtRequestDTO) {
     return this.http.post<JwtResponseDTO>(`${this.url}/login`, credentials).pipe(
       tap(response => {
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem('token', response.jwttoken); // O localStorage
+        // 🚀 2. Reemplazamos 'typeof window' por el escudo de Angular
+        if (isPlatformBrowser(this.platformId)) {
+          sessionStorage.setItem('token', response.jwttoken); 
         }
       })
     );
   }
-  // 🚀 1. Método para enviar el Token de Google a Spring Boot
+
   loginWithGoogle(token: string) {
-    // Apuntamos al endpoint @PostMapping("/google") que creaste en tu JwtAuthenticationController
     return this.http.post<any>(`${this.url}/google`, { token: token });
   }
 
   getToken(): string | null {
-    if (typeof window !== 'undefined') {
+    // 🚀 3. Validación oficial para extraer el token de forma segura
+    if (isPlatformBrowser(this.platformId)) {
       return sessionStorage.getItem('token');
     }
     return null;
   }
 
   logout() {
-    if (typeof window !== 'undefined') {
+    if (isPlatformBrowser(this.platformId)) {
       sessionStorage.removeItem('token');
     }
   }
 
-  // Decodificar payload para roles (puedes usar jwt-decode npm package)
   getRole(): string | null {
     const token = this.getToken();
     if (!token) return null;
     
     try {
       const payload = token.split('.')[1];
-      // Convertimos el formato Base64Url a Base64 estándar para evitar errores de lectura
       const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-      const decoded = JSON.parse(window.atob(base64));
       
-      // --- LÍNEA DE DEBUG CLAVE ---
-      console.log('📦 Contenido COMPLETO del token:', decoded);
-      
-      return decoded.roles; 
+      // 🚀 4. Protegemos window.atob() para que no explote en el servidor
+      if (isPlatformBrowser(this.platformId)) {
+        const decoded = JSON.parse(window.atob(base64));
+        console.log('📦 Contenido COMPLETO del token:', decoded);
+        return decoded.roles; 
+      }
+      return null;
     } catch (e) {
       console.error('Error decodificando el token', e);
       return null;
     }
   }
-  // 🚀 Extrae el correo del token JWT de PrevDengue
+
   getEmail(): string | null {
     const token = this.getToken();
     if (!token) return null;
@@ -66,10 +72,13 @@ export class AuthService {
     try {
       const payload = token.split('.')[1];
       const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-      const decoded = JSON.parse(window.atob(base64));
       
-      // Spring Security guarda el correo (username) en la propiedad 'sub' (subject)
-      return decoded.sub; 
+      // 🚀 5. También protegemos este window.atob()
+      if (isPlatformBrowser(this.platformId)) {
+        const decoded = JSON.parse(window.atob(base64));
+        return decoded.sub; 
+      }
+      return null;
     } catch (e) {
       console.error('Error decodificando el token para sacar el correo', e);
       return null;
