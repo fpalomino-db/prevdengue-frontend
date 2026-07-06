@@ -12,6 +12,7 @@
   "packageManager": "npm@11.6.2",
   "dependencies": {
     "@abacritt/angularx-social-login": "^2.4.0",
+    "@angular/animations": "^20.1.8",
     "@angular/cdk": "^21.2.14",
     "@angular/common": "^21.2.0",
     "@angular/compiler": "^21.2.0",
