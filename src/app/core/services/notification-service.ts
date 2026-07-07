@@ -22,7 +22,7 @@ export class NotificationService {
   }
 }
 
-  iniciarListenerPrimerPlano() {
+ iniciarListenerPrimerPlano() {
     const app = getApps().length === 0 ? initializeApp(environment.firebase) : getApp();
     const messaging = getMessaging(app);
 
@@ -41,9 +41,17 @@ export class NotificationService {
         });
       });
 
-      // Intentamos mostrar también la nativa de Windows
-      if (Notification.permission === 'granted') {
-        new Notification(titulo, { body: cuerpo });
+      // 🌟 EL CAMBIO CLAVE: Usamos el Service Worker en lugar de 'new Notification'
+      // Esto burla el bloqueo de seguridad de Edge/Chrome en producción (Vercel)
+      if (Notification.permission === 'granted' && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+          registration.showNotification(titulo, {
+            body: cuerpo,
+            icon: '/favicon.ico', // Ajusta esto si tu logo está en '/assets/...'
+            vibrate: [200, 100, 200],
+            requireInteraction: true // Evita que la notificación desaparezca sola rápido
+          });
+        });
       }
     });
   }
