@@ -47,10 +47,10 @@ export class NotificationService {
         navigator.serviceWorker.ready.then(registration => {
           registration.showNotification(titulo, {
             body: cuerpo,
-            icon: '/favicon.ico', // Ajusta esto si tu logo está en '/assets/...'
+            icon: '/favicon.ico', 
             vibrate: [200, 100, 200],
-            requireInteraction: true // Evita que la notificación desaparezca sola rápido
-          });
+            requireInteraction: true 
+          } as any); // <--- ¡ESTA ES LA MAGIA SALVADORA!
         });
       }
     });
