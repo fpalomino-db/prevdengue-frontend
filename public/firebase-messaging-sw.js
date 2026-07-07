@@ -18,9 +18,13 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log('Mensaje recibido en segundo plano:', payload);
   const notificationTitle = payload.notification.title || "Alerta PrevDengue";
+  
   const notificationOptions = {
     body: payload.notification.body || "Tienes un nuevo mensaje",
-    icon: '/favicon.ico' 
+    icon: '/favicon.ico',
+    vibrate: [200, 100, 200], // 🔥 Hace vibrar el celular (Android)
+    requireInteraction: true  // 🔥 Obliga a Windows/Edge a mantener la notificación en pantalla
   };
+  
   return self.registration.showNotification(notificationTitle, notificationOptions);
 });
